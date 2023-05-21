@@ -5,6 +5,9 @@
     "remove": "sls remove",
     "deploy": "sls deploy",
     "deploy:users-create": "sls deploy function -f users-create",
+    "deploy:users-list": "sls deploy function -f users-list",
+    "deploy:users-item": "sls deploy function -f users-item",
+    "deploy:users-update": "sls deploy function -f users-update",
     "clean": "sls requirements clean && sls requirements cleanCache"
   },
   "dependencies": {
