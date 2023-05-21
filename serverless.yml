@@ -60,6 +60,38 @@ functions:
       - httpApi:
           path: /users/{id}
           method: post
+  products-create:
+    handler: src/products.submit
+    memorySize: 128
+    description: Submit a new product
+    events:
+      - httpApi:
+          path: /products
+          method: post
+  products-list:
+    handler: src/products.list
+    memorySize: 128
+    description: List all products
+    events:
+      - httpApi:
+          path: /products
+          method: get
+  products-item:
+    handler: src/products.item
+    memorySize: 128
+    description: Get a product by id
+    events:
+      - httpApi:
+          path: /products/{id}
+          method: get
+  products-update:
+    handler: src/products.update
+    memorySize: 128
+    description: Update a product
+    events:
+      - httpApi:
+          path: /products/{id}
+          method: post
 
 resources:
   Resources:

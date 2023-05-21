@@ -8,6 +8,10 @@
     "deploy:users-list": "sls deploy function -f users-list",
     "deploy:users-item": "sls deploy function -f users-item",
     "deploy:users-update": "sls deploy function -f users-update",
+    "deploy:products-create": "sls deploy function -f products-create",
+    "deploy:products-list": "sls deploy function -f products-list",
+    "deploy:products-item": "sls deploy function -f products-item",
+    "deploy:products-update": "sls deploy function -f products-update",
     "clean": "sls requirements clean && sls requirements cleanCache"
   },
   "dependencies": {
