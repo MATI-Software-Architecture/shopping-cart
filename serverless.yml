@@ -1,0 +1,130 @@
+service: shopping-cart
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: dev
+  region: us-east-1
+  environment:
+    USERS: ${self:service}-${self:provider.stage}-users
+    PRODUCTS: ${self:service}-${self:provider.stage}-products
+    TRANSACTIONS: ${self:service}-${self:provider.stage}-transactions
+    CONFIG: ${self:service}-${self:provider.stage}-config
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+          Resource: "*"
+
+package:
+  patterns:
+    - src/**
+
+functions:
+  users-create:
+    handler: src/users.submit
+    memorySize: 128
+    description: Submit a new user
+    events:
+      - httpApi:
+          path: /users
+          method: post
+  users-list:
+    handler: src/users.list
+    memorySize: 128
+    description: List all users
+    events:
+      - httpApi:
+          path: /users
+          method: get
+  users-item:
+    handler: src/users.item
+    memorySize: 128
+    description: Get a user by id
+    events:
+      - httpApi:
+          path: /users/{id}
+          method: get
+  users-update:
+    handler: src/users.update
+    memorySize: 128
+    description: Update a user
+    events:
+      - httpApi:
+          path: /users/{id}
+          method: post
+
+resources:
+  Resources:
+    UsersDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"   
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:service}-${self:provider.stage}-users
+    ProductsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"   
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:service}-${self:provider.stage}-products
+    TransactionsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"   
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:service}-${self:provider.stage}-transactions
+    ConfigDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "id"
+            AttributeType: "S"   
+        KeySchema:
+          - AttributeName: "id"
+            KeyType: "HASH"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:service}-${self:provider.stage}-config
+
