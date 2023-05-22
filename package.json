@@ -11,7 +11,9 @@
     "aws-sdk": "^2.1381.0",
     "axios": "^1.4.0",
     "bluebird": "^3.7.2",
+    "crypto-js": "^4.1.1",
     "node-rsa": "^1.1.1",
+    "serverless-provisioned-concurrency-autoscaling": "^1.9.1",
     "uuid": "^9.0.0"
   }
 }

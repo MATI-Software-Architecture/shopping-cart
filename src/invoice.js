@@ -3,10 +3,15 @@
 const AWS = require('aws-sdk'); 
 const axios = require('axios');
 
-const { Submit, List, Get, Query, Delete } = require('./dynamo');
-const { validateRequest, apiResponse, itemInfo, createInvoice } = require('./utils');
+const { Submit, List, Get, Query, Delete, Update } = require('./dynamo');
+const { validateRequest, apiResponse, itemInfo, itemUpdateInfo } = require('./utils');
+const { createInvoice, checkPaymentGateway, encryptData, decryptData} = require('./utils');
 
 AWS.config.setPromisesDependency(require('bluebird'));
+
+const invoiceTable = process.env.INVOICES;
+const paymentTable = process.env.CONFIG;
+const cartTable = process.env.TRANSACTIONS;
 
 const validationMatrix = {
   userId: 'string',
@@ -16,9 +21,6 @@ const validationMatrix = {
 // API
 module.exports.submit = async (event, context, callback) => {
   const body = JSON.parse(event.body);
-  const paymentTable = process.env.CONFIG;
-  const cartTable = process.env.TRANSACTIONS;
-  const invoiceTable = process.env.INVOICES;
 
   //Validate request
   const valid = validateRequest(body, validationMatrix);
@@ -95,7 +97,6 @@ module.exports.submit = async (event, context, callback) => {
 
 module.exports.list = async (event, context, callback) => {
   const queryParameters = event.queryStringParameters;
-  const invoiceTable = process.env.INVOICES;
   const userId = queryParameters.userId;
 
   //Check if userId is provided
@@ -128,14 +129,89 @@ module.exports.list = async (event, context, callback) => {
   }
 };
 
-module.exports.webhook = (event, context, callback) => {
-  let fields = "id, " + Object.keys(validationMatrix).join(", ")
-  console.log(fields);
-  List(fields, process.env.PRODUCTS).then(res => {
-    let response = {products: res.Items};
+module.exports.webhook = async (event, context, callback) => {
+  const body = JSON.parse(event.body);
+
+  let methods;
+  try {
+    methods = await List("id, paymentMethod, props", paymentTable);
+  } catch(err) {
+    let response = {message: `Unable to list of payments`, error: err};
+    callback(null, apiResponse(500, response));
+    return;
+  }
+
+  // discover payment gateway
+  let paymentGateway;
+  for (let i = 0; i < methods.Items.length; i++) {
+    let method = methods.Items[i];
+    let check = checkPaymentGateway(body, method.props);
+    if (check) {
+      paymentGateway = method;
+      break;
+    } 
+  }
+  if (!paymentGateway) {
+    let response = {message: `Payment method not found`};
+    callback(null, apiResponse(400, response));
+    return;
+  }
+
+  // get invoice key
+  let keyArray = body.transactionId.split(',');
+  if (keyArray.length !== 2) {
+    let response = {message: `Unable to update invoice, invalid transactionId`};
+    callback(null, apiResponse(400, response));
+    return;
+  }
+
+  //check integrity of invoice
+  // let encrypted = encryptData(body.transactionId, '', paymentGateway.paymentMethod);
+  // console.log('encrypted', encrypted);
+  let decrypted = decryptData(body.signature, '', paymentGateway.paymentMethod);
+  console.log('decrypted', decrypted, 'key', paymentGateway.paymentMethod);
+  if (decrypted !== body.transactionId) {
+    let response = {message: `Unable to update invoice, invalid signature`};
+    callback(null, apiResponse(400, response));
+    return;
+  }
+
+  //check if invoice status
+  try{
+    let invoiceCkeck = await Get(
+      {userId: keyArray[0], date: keyArray[1]}, invoiceTable
+    );
+    if (invoiceCkeck.Item === undefined) {
+      let response = {message: `Invoice not found`};
+      callback(null, apiResponse(400, response));
+      return;
+    }
+    if (invoiceCkeck.Item.status !== 'pending') {
+      let response = {message: `Invoice already processed`};
+      callback(null, apiResponse(400, response));
+      return;
+    }
+  } catch(err) {
+    let response = {message: `Unable to get invoice`, error: err};
+    callback(null, apiResponse(500, response));
+    return;
+  }
+
+  //update invoice status
+  try{
+    let item;
+    if (body.code === 'SUCCESS') {
+      item = itemUpdateInfo({status: 'paid'});
+    } else {
+      item = itemUpdateInfo({status: 'failed'});
+    }
+    let invoice = await Update(
+      {userId: keyArray[0], date: keyArray[1]}, item, invoiceTable
+    );
+    let response = {paymentGateway: paymentGateway.paymentMethod, invoice: invoice};
     callback(null, apiResponse(200, response));
-  }).catch(err => {
-    let response = {message: `Unable to list of products`, error: err};
-    callback(null, apiResponse(500, response))
-  });
+  } catch(err) {
+    let response = {message: `Unable to update invoice`, error: err};
+    callback(null, apiResponse(500, response));
+  }
 };

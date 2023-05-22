@@ -29,6 +29,9 @@ package:
   patterns:
     - src/**
 
+plugins:
+  - serverless-provisioned-concurrency-autoscaling
+
 functions:
 # config
   config-create:
@@ -94,6 +97,17 @@ functions:
   products-list:
     handler: src/products.list
     memorySize: 128
+    provisionedConcurrency: 1
+    concurrencyAutoscaling:
+      enabled: true
+      alias: provisioned
+      maximum: 10
+      minimum: 1
+      usage: 0.75
+      scaleInCooldown: 0
+      scaleOutCooldown: 0
+      customMetric:
+        statistic: maximum
     description: List all products
     events:
       - httpApi:

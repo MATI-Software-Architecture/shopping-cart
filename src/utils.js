@@ -1,8 +1,8 @@
 'use strict';
 
 const uuid = require('uuid');
-const NodeRSA = require('node-rsa');
 const { Get } = require('./dynamo');
+const crypto = require("crypto-js");
 
 module.exports.validateRequest = (requestBody, validationMatrix) => {
   for (let key in validationMatrix) {
@@ -74,3 +74,32 @@ module.exports.createInvoice = async (cart) => {
     total: total, 
   };
 };
+
+module.exports.checkPaymentGateway = (body, props) => {
+  let key;
+  for (var i = 0; i < props.length; i++) {
+    key = body.hasOwnProperty(props[i]);
+    if (!key) {
+      break;
+    }
+  }
+  return key;
+};
+
+module.exports.encryptData = (data, iv, key) => {
+  let encryptedString = crypto.AES.encrypt(data, key, {
+    iv: iv,
+    mode: crypto.mode.CBC,
+    padding: crypto.pad.Pkcs7,
+  });
+  return encryptedString.toString();
+}
+
+module.exports.decryptData = (encrypted, iv, key) => {
+  let decrypted = crypto.AES.decrypt(encrypted, key, {
+    iv: iv,
+    mode: crypto.mode.CBC,
+    padding: crypto.pad.Pkcs7,
+  });
+  return decrypted.toString(crypto.enc.Utf8);
+}
