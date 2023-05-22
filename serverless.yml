@@ -10,6 +10,7 @@ provider:
     USERS: ${self:service}-${self:provider.stage}-users
     PRODUCTS: ${self:service}-${self:provider.stage}-products
     TRANSACTIONS: ${self:service}-${self:provider.stage}-transactions
+    INVOICES: ${self:service}-${self:provider.stage}-invoices
     CONFIG: ${self:service}-${self:provider.stage}-config
   iam:
     role:
@@ -29,6 +30,24 @@ package:
     - src/**
 
 functions:
+# config
+  config-create:
+    handler: src/config.submit
+    memorySize: 128
+    description: Submit a new config
+    events:
+      - httpApi:
+          path: /config
+          method: post
+  config-list:
+    handler: src/config.list
+    memorySize: 128
+    description: List all configs
+    events:
+      - httpApi:
+          path: /config
+          method: get
+
 # Users
   users-create:
     handler: src/users.submit
@@ -61,7 +80,7 @@ functions:
     events:
       - httpApi:
           path: /users/{id}
-          method: post
+          method: put
 
   # products
   products-create:
@@ -95,7 +114,7 @@ functions:
     events:
       - httpApi:
           path: /products/{id}
-          method: post
+          method: put
 
   # cart transactions
   cart-add:
@@ -113,7 +132,7 @@ functions:
     events:
       - httpApi:
           path: /cart/remove
-          method: post
+          method: delete
   cart-list:
     handler: src/cart.list
     memorySize: 128
@@ -121,6 +140,32 @@ functions:
     events:
       - httpApi:
           path: /cart
+          method: get
+
+  # purchases
+  invoice-submit:
+    handler: src/invoice.submit
+    memorySize: 128
+    description: Purchase all products in the cart
+    events:
+      - httpApi:
+          path: /purchase
+          method: post
+  invoice-list:
+    handler: src/invoice.list
+    memorySize: 128
+    description: List all invoices
+    events:
+      - httpApi:
+          path: /invoices
+          method: get
+  invoice-webhook:
+    handler: src/invoice.webhook
+    memorySize: 128
+    description: Webhook for Payment Platforms
+    events:
+      - httpApi:
+          path: /payment
           method: get
 
 resources:
@@ -177,6 +222,26 @@ resources:
         StreamSpecification:
           StreamViewType: "NEW_AND_OLD_IMAGES"
         TableName: ${self:service}-${self:provider.stage}-transactions
+    InvoiceDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: "userId"
+            AttributeType: "S"
+          - AttributeName: "date"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "userId"
+            KeyType: "HASH"
+          - AttributeName: "date"
+            KeyType: "RANGE"
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        StreamSpecification:
+          StreamViewType: "NEW_AND_OLD_IMAGES"
+        TableName: ${self:service}-${self:provider.stage}-invoice
     ConfigDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
       DeletionPolicy: Retain

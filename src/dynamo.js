@@ -29,9 +29,7 @@ module.exports.Query = async (projection, attribute, condition, TableName) => {
     ExpressionAttributeValues: attribute,
     KeyConditionExpression: condition,
   };
-  console.log('Query inf', Info);
   const res = await dynamoDb.query(Info).promise();
-  console.log('Query res', res);
   return res;
 };
 

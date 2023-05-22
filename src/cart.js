@@ -107,18 +107,41 @@ module.exports.remove = (event, context, callback) => {
 }
 
 module.exports.list = (event, context, callback) => {
-  const requestBody = JSON.parse(event.body);
-  if (requestBody.userId === undefined) {
+  const queryParameters = event.queryStringParameters;
+  if (queryParameters.userId === undefined) {
     let response = {message: `Unable to list of products, userId is required`};
     callback(null, apiResponse(500, response));
     return;
   }
 
   let projection = "productId, amount";
-  let attribute = {":userId": requestBody.userId};
+  let attribute = {":userId": queryParameters.userId};
   let condition = 'userId = :userId';
-  Query(projection, attribute, condition, process.env.TRANSACTIONS).then(res => {
-    let response = {cart: res.Items};
+  Query(projection, attribute, condition, process.env.TRANSACTIONS).then(async cart => {
+    let items = [];
+    let total = 0;
+    for(let i = 0; i < cart.Items.length; i++) {
+      let key = {id: cart.Items[i].productId};
+      let product = await Get(key, process.env.PRODUCTS);
+      let item = {
+        product: product.Item.product,
+        unitPrice: product.Item.price,
+        brand: product.Item.brand,
+        amount: cart.Items[i].amount,
+        price: product.Item.price * cart.Items[i].amount
+      }
+      total += item.price;
+      items.push(item);
+    }
+    let vat = total * 0.19;
+    let subtotal = total - vat;
+    let response = {
+      date: new Date().toISOString(),
+      items: items, 
+      vat: vat, 
+      subtotal: subtotal,
+      total: total, 
+    };
     callback(null, apiResponse(200, response));
   }).catch(err => {
     let response = {message: `Unable to list of products`, error: err};
