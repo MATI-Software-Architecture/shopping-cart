@@ -21,6 +21,7 @@ provider:
             - dynamodb:GetItem
             - dynamodb:PutItem
             - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
           Resource: "*"
 
 package:
@@ -28,6 +29,7 @@ package:
     - src/**
 
 functions:
+# Users
   users-create:
     handler: src/users.submit
     memorySize: 128
@@ -60,6 +62,8 @@ functions:
       - httpApi:
           path: /users/{id}
           method: post
+
+  # products
   products-create:
     handler: src/products.submit
     memorySize: 128
@@ -92,6 +96,32 @@ functions:
       - httpApi:
           path: /products/{id}
           method: post
+
+  # cart transactions
+  cart-add:
+    handler: src/cart.add
+    memorySize: 128
+    description: Add a product to the cart
+    events:
+      - httpApi:
+          path: /cart/add
+          method: post
+  cart-remove:
+    handler: src/cart.remove
+    memorySize: 128
+    description: Remove a product from the cart
+    events:
+      - httpApi:
+          path: /cart/remove
+          method: post
+  cart-list:
+    handler: src/cart.list
+    memorySize: 128
+    description: List all products in the cart
+    events:
+      - httpApi:
+          path: /cart
+          method: get
 
 resources:
   Resources:
@@ -132,11 +162,15 @@ resources:
       DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
-          - AttributeName: "id"
-            AttributeType: "S"   
+          - AttributeName: "userId"
+            AttributeType: "S" 
+          - AttributeName: "productId"
+            AttributeType: "S"  
         KeySchema:
-          - AttributeName: "id"
+          - AttributeName: "userId"
             KeyType: "HASH"
+          - AttributeName: "productId"
+            KeyType: "RANGE"
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1

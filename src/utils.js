@@ -27,9 +27,11 @@ module.exports.apiResponse = (statusCode, body) => {
   };
 };
 
-module.exports.itemInfo = (requestBody) => {
+module.exports.itemInfo = (requestBody, useId) => {
   const timestamp = new Date().getTime();
-  requestBody['id'] = uuid.v1();
+  if (useId) {
+    requestBody['id'] = uuid.v1();
+  }
   requestBody['submittedAt'] = timestamp;
   requestBody['updatedAt'] = timestamp;
   return requestBody;

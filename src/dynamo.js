@@ -3,47 +3,63 @@
 const AWS = require('aws-sdk'); 
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
-module.exports.submitItem = async (item, TableName) => {
-  const candidateInfo = {
+module.exports.Submit = async (item, TableName) => {
+  const Info = {
     TableName: TableName,
     Item: item,
     ReturnValue: 'ALL_NEW',
   };
-  const res = await dynamoDb.put(candidateInfo).promise();
-  console.log('Dynamo response', res);
+  const res = await dynamoDb.put(Info).promise();
   return item;
 };
 
-module.exports.litsItems = async (fields, TableName) => {
-  const userInfo = {
-    TableName: TableName
+module.exports.List = async (fields, TableName) => {
+  const Info = {
+    TableName: TableName,
+    ProjectionExpression: fields,
   };
-  if (fields) {
-    userInfo.ProjectionExpression = fields;
-  }
-  const res = await dynamoDb.scan(userInfo).promise();
-  console.log('Dynamo response', res);
+  const res = await dynamoDb.scan(Info).promise();
   return res;
 };
 
-module.exports.getItem = async (key, TableName) => {
-  const candidateInfo = {
+module.exports.Query = async (projection, attribute, condition, TableName) => {
+  const Info = {
+    TableName: TableName,
+    ProjectionExpression: projection,
+    ExpressionAttributeValues: attribute,
+    KeyConditionExpression: condition,
+  };
+  console.log('Query inf', Info);
+  const res = await dynamoDb.query(Info).promise();
+  console.log('Query res', res);
+  return res;
+};
+
+module.exports.Get = async (key, TableName) => {
+  const Info = {
     TableName: TableName,
     Key: key,
   };
-  const res = await dynamoDb.get(candidateInfo).promise();
-  console.log('Dynamo response', res);
+  const res = await dynamoDb.get(Info).promise();
   return res;
 };
 
-module.exports.updateItem = async (key, item, TableName) => {
-  const candidateInfo = {
+module.exports.Update = async (key, item, TableName) => {
+  const Info = {
     TableName: TableName,
     Key: key,
     AttributeUpdates: item,
     ReturnValues: 'ALL_NEW',
   };
-  const res = await dynamoDb.update(candidateInfo).promise();
-  console.log('Dynamo response', res);
+  const res = await dynamoDb.update(Info).promise();
   return res.Attributes;
+}
+
+module.exports.Delete = async (key, TableName) => {
+  const Info = {
+    TableName: TableName,
+    Key: key,
+  };
+  const res = await dynamoDb.delete(Info).promise();
+  return res;
 }
