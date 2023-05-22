@@ -4,19 +4,14 @@
   "scripts": {
     "remove": "sls remove",
     "deploy": "sls deploy",
-    "deploy:users-create": "sls deploy function -f users-create",
-    "deploy:users-list": "sls deploy function -f users-list",
-    "deploy:users-item": "sls deploy function -f users-item",
-    "deploy:users-update": "sls deploy function -f users-update",
-    "deploy:products-create": "sls deploy function -f products-create",
-    "deploy:products-list": "sls deploy function -f products-list",
-    "deploy:products-item": "sls deploy function -f products-item",
-    "deploy:products-update": "sls deploy function -f products-update",
+    "deploy:fn": "sls deploy function -f users-create",
     "clean": "sls requirements clean && sls requirements cleanCache"
   },
   "dependencies": {
     "aws-sdk": "^2.1381.0",
+    "axios": "^1.4.0",
     "bluebird": "^3.7.2",
+    "node-rsa": "^1.1.1",
     "uuid": "^9.0.0"
   }
 }

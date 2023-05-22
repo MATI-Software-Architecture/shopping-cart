@@ -22,13 +22,16 @@ module.exports.List = async (fields, TableName) => {
   return res;
 };
 
-module.exports.Query = async (projection, attribute, condition, TableName) => {
+module.exports.Query = async (projection, attribute, condition, TableName, names) => {
   const Info = {
     TableName: TableName,
     ProjectionExpression: projection,
     ExpressionAttributeValues: attribute,
     KeyConditionExpression: condition,
   };
+  if (names) {
+    Info['ExpressionAttributeNames'] = names;
+  }
   const res = await dynamoDb.query(Info).promise();
   return res;
 };

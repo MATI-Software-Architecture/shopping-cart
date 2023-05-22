@@ -32,7 +32,7 @@ module.exports.submit = (event, context, callback) => {
 }
 
 module.exports.list = (event, context, callback) => {
-  let fields = Object.keys(validationMatrix).join(", ")
+  let fields = 'id, paymentMethod'
   List(fields, process.env.CONFIG).then(res => {
     let response = {config: res.Items};
     callback(null, apiResponse(200, response));

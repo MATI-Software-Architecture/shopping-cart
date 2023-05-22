@@ -10,7 +10,7 @@ provider:
     USERS: ${self:service}-${self:provider.stage}-users
     PRODUCTS: ${self:service}-${self:provider.stage}-products
     TRANSACTIONS: ${self:service}-${self:provider.stage}-transactions
-    INVOICES: ${self:service}-${self:provider.stage}-invoices
+    INVOICES: ${self:service}-${self:provider.stage}-invoice
     CONFIG: ${self:service}-${self:provider.stage}-config
   iam:
     role:
@@ -166,7 +166,7 @@ functions:
     events:
       - httpApi:
           path: /payment
-          method: get
+          method: post
 
 resources:
   Resources:

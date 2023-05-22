@@ -1,8 +1,8 @@
 'use strict';
 
 const AWS = require('aws-sdk'); 
-const { Submit, List, Get, Update, Query, Delete } = require('./dynamo');
-const { validateRequest, apiResponse, itemInfo, itemUpdateInfo } = require('./utils');
+const { Submit, Get, Update, Query, Delete } = require('./dynamo');
+const { validateRequest, apiResponse, itemInfo, itemUpdateInfo, createInvoice } = require('./utils');
 
 AWS.config.setPromisesDependency(require('bluebird'));
 
@@ -108,6 +108,7 @@ module.exports.remove = (event, context, callback) => {
 
 module.exports.list = (event, context, callback) => {
   const queryParameters = event.queryStringParameters;
+  const cartTable = process.env.TRANSACTIONS;
   if (queryParameters.userId === undefined) {
     let response = {message: `Unable to list of products, userId is required`};
     callback(null, apiResponse(500, response));
@@ -117,31 +118,8 @@ module.exports.list = (event, context, callback) => {
   let projection = "productId, amount";
   let attribute = {":userId": queryParameters.userId};
   let condition = 'userId = :userId';
-  Query(projection, attribute, condition, process.env.TRANSACTIONS).then(async cart => {
-    let items = [];
-    let total = 0;
-    for(let i = 0; i < cart.Items.length; i++) {
-      let key = {id: cart.Items[i].productId};
-      let product = await Get(key, process.env.PRODUCTS);
-      let item = {
-        product: product.Item.product,
-        unitPrice: product.Item.price,
-        brand: product.Item.brand,
-        amount: cart.Items[i].amount,
-        price: product.Item.price * cart.Items[i].amount
-      }
-      total += item.price;
-      items.push(item);
-    }
-    let vat = total * 0.19;
-    let subtotal = total - vat;
-    let response = {
-      date: new Date().toISOString(),
-      items: items, 
-      vat: vat, 
-      subtotal: subtotal,
-      total: total, 
-    };
+  Query(projection, attribute, condition, cartTable).then(async cart => {
+    let response = await createInvoice(cart);
     callback(null, apiResponse(200, response));
   }).catch(err => {
     let response = {message: `Unable to list of products`, error: err};
