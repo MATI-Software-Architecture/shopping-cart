@@ -19,6 +19,14 @@ https://github.com/serverless
 
 https://www.serverless.com/framework/docs/
 
+Examples:
+- https://www.serverless.com/blog/node-rest-api-with-serverless-lambda-and-dynamodb
+- https://www.serverless.com/framework/docs/providers/aws/guide/serverless.yml
+- https://www.serverless.com/framework/docs/providers/aws/cli-reference/config
+- https://www.serverless.com/blog/cors-api-gateway-survival-guide
+- https://www.serverless.com/framework/docs/tutorial
+- https://www.serverless.com/plugins/serverless-provisioned-concurrency-autoscaling
+
 ### Deployment
 
 ```
